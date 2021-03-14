@@ -41,7 +41,7 @@ polka()
 
 		if (rendered) {
 			res.writeHead(rendered.status, rendered.headers);
-			res.end(rendered.body);
+			res.pipe(rendered.body);
 		} else {
 			res.statusCode = 404;
 			res.end('Not found');

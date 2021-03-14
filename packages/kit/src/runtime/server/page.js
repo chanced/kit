@@ -127,12 +127,12 @@ async function get_response({ request, options, $session, route, status = 200, e
 				if (key !== 'etag') headers[key] = value;
 			});
 
-			const payload = JSON.stringify({
+			const payload = {
 				status: clone.status,
 				statusText: clone.statusText,
 				headers,
-				body: await clone.text() // TODO handle binary data
-			});
+				body: clone.body
+			};
 
 			// TODO i guess we need to sanitize/escape this... somehow?
 			serialized_data.push({ url, payload });
@@ -325,14 +325,14 @@ async function get_response({ request, options, $session, route, status = 200, e
 		init
 	].join('\n\n');
 
+
+	
+	const format_amp_body = (rendered) => rendered.html + 
+	serialized_data.map(({ url, payload }) => `<script type="svelte-data" url="${url}">${payload}</script>`)
+		.join('\n\n\t\t\t');
 	const body = options.amp
 		? rendered.html
-		: `${rendered.html}
-
-			${serialized_data
-				.map(({ url, payload }) => `<script type="svelte-data" url="${url}">${payload}</script>`)
-				.join('\n\n\t\t\t')}
-		`.replace(/^\t{2}/gm, '');
+		: format_amp_body(rendered).replace(/^\t{2}/gm, '');
 
 	/** @type {import('../../types').Headers} */
 	const headers = {

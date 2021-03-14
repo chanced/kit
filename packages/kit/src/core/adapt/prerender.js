@@ -1,4 +1,4 @@
-import { existsSync, readFileSync, writeFileSync } from 'fs';
+import { existsSync, createReadStream, writeFileSync } from 'fs';
 import { dirname, join, resolve as resolve_path, sep as path_separator } from 'path';
 import { parse, pathToFileURL, resolve, URLSearchParams } from 'url';
 import glob from 'tiny-glob/sync.js';
@@ -95,7 +95,7 @@ export async function prerender({ cwd, out, log, config, force }) {
 			{
 				local: true,
 				only_prerender: !force,
-				get_static_file: (file) => readFileSync(join(config.kit.files.assets, file))
+				get_static_file: (file) => createReadStream(join(config.kit.files.assets, file))
 			}
 		);
 

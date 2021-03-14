@@ -200,7 +200,7 @@ class Watcher extends EventEmitter {
 								return error.stack;
 							},
 							get_static_file: (file) =>
-								fs.readFileSync(path.join(this.config.kit.files.assets, file)),
+								fs.createReadStream(path.join(this.config.kit.files.assets, file)),
 							get_amp_css: (url) => '' // TODO: implement this
 						}
 					);

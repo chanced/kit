@@ -56,7 +56,7 @@ export async function start({ port, config, cwd = process.cwd() }) {
 								assets: '/.'
 							},
 							get_stack: (error) => error.stack, // TODO should this return a sourcemapped stacktrace?
-							get_static_file: (file) => fs.readFileSync(join(config.kit.files.assets, file))
+							get_static_file: (file) => fs.createReadStream(join(config.kit.files.assets, file))
 						}
 					);
 
