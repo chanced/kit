@@ -5,7 +5,8 @@ import { fileURLToPath } from 'url';
 import { bold, cyan, gray, green, red } from 'kleur/colors';
 import prompts from 'prompts';
 import { mkdirp, copy } from './utils.js';
-
+//@ts-ignore
+import optionator from 'optionator';
 // prettier-ignore
 const disclaimer = `
 ${bold(cyan('Welcome to SvelteKit!'))}
@@ -21,7 +22,84 @@ async function main() {
 	console.log(gray(`\ncreate-svelte version ${version}`));
 	console.log(disclaimer);
 
-	const cwd = process.argv[2] || '.';
+	const templates = fs.readdirSync(dist('templates')).map((dir) => {
+		const meta_file = dist(`templates/${dir}/meta.json`);
+		const meta = JSON.parse(fs.readFileSync(meta_file, 'utf8'));
+
+		return {
+			title: meta.description,
+			value: dir
+		};
+	});
+	/** @type {Array<prompts.PromptObject>} */
+	const questions = [
+		{
+			type: 'select',
+			name: 'template',
+			message: 'Which Svelte app template?',
+			choices: templates
+		},
+		{
+			type: 'toggle',
+			name: 'typescript',
+			message: 'Use TypeScript?',
+			initial: false,
+			active: 'Yes',
+			inactive: 'No'
+		},
+		{
+			type: 'toggle',
+			name: 'eslint',
+			message: 'Add ESLint for code linting?',
+			initial: false,
+			active: 'Yes',
+			inactive: 'No'
+		},
+		{
+			type: 'toggle',
+			name: 'prettier',
+			message: 'Add Prettier for code formatting?',
+			initial: false,
+			active: 'Yes',
+			inactive: 'No'
+		}
+	];
+
+	const opts = [
+		{
+			option: 'help',
+			alias: 'h',
+			type: 'Boolean',
+			description: 'displays help'
+		},
+		...questions.map((q) => {
+			/** @type { string[] | undefined} */
+			let e = undefined;
+			if (q.type === 'select') {
+				const { choices } = q;
+				if (Array.isArray(choices)) {
+					e = choices.map((c) => c.value);
+				}
+			}
+			const opt = {
+				option: q.name,
+				required: false,
+				description: q.message,
+				type: q.type === 'toggle' ? 'Boolean' : 'String',
+				...(e ? { enum: e } : {})
+			};
+			return opt;
+		})
+	];
+
+	const cmd = optionator({
+		usage: 'npm init svelte@next [./directory] -- [options]',
+		append: `create-svelte version ${version}`,
+		options: opts
+	});
+
+	const parsed = cmd.parseArgv(process.argv);
+	const cwd = parsed._[0] || '.';
 
 	if (fs.existsSync(cwd)) {
 		if (fs.readdirSync(cwd).length > 0) {
@@ -40,48 +118,10 @@ async function main() {
 		mkdirp(cwd);
 	}
 
-	const options = /** @type {import('./types/internal').Options} */ (
-		await prompts([
-			{
-				type: 'select',
-				name: 'template',
-				message: 'Which Svelte app template?',
-				choices: fs.readdirSync(dist('templates')).map((dir) => {
-					const meta_file = dist(`templates/${dir}/meta.json`);
-					const meta = JSON.parse(fs.readFileSync(meta_file, 'utf8'));
-
-					return {
-						title: meta.description,
-						value: dir
-					};
-				})
-			},
-			{
-				type: 'toggle',
-				name: 'typescript',
-				message: 'Use TypeScript?',
-				initial: false,
-				active: 'Yes',
-				inactive: 'No'
-			},
-			{
-				type: 'toggle',
-				name: 'eslint',
-				message: 'Add ESLint for code linting?',
-				initial: false,
-				active: 'Yes',
-				inactive: 'No'
-			},
-			{
-				type: 'toggle',
-				name: 'prettier',
-				message: 'Add Prettier for code formatting?',
-				initial: false,
-				active: 'Yes',
-				inactive: 'No'
-			}
-		])
-	);
+	const options = /** @type {import('./types/internal').Options} */ {
+		...parsed,
+		...(await prompts(questions.filter((q) => parsed[q.name] === undefined)))
+	};
 
 	const name = path.basename(path.resolve(cwd));
 

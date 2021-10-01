@@ -10,7 +10,8 @@
 	"bin": "./bin.js",
 	"dependencies": {
 		"kleur": "^4.1.4",
-		"prompts": "^2.4.1"
+		"prompts": "^2.4.1",
+		"optionator": "^0.9.1"
 	},
 	"devDependencies": {
 		"@sveltejs/kit": "workspace:*",
