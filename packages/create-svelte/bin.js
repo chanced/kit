@@ -101,6 +101,10 @@ async function main() {
 	const parsed = cmd.parseArgv(process.argv);
 	const cwd = parsed._[0] || '.';
 
+	const options = /** @type {import('./types/internal').Options} */ {
+		...parsed,
+		...(await prompts(questions.filter((q) => parsed[q.name] === undefined)))
+	};
 	if (fs.existsSync(cwd)) {
 		if (fs.readdirSync(cwd).length > 0) {
 			const response = await prompts({
@@ -117,11 +121,6 @@ async function main() {
 	} else {
 		mkdirp(cwd);
 	}
-
-	const options = /** @type {import('./types/internal').Options} */ {
-		...parsed,
-		...(await prompts(questions.filter((q) => parsed[q.name] === undefined)))
-	};
 
 	const name = path.basename(path.resolve(cwd));
 
